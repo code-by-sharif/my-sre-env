@@ -1,0 +1,15 @@
+[project]
+name = "sre-env"
+version = "0.1.0"
+description = "SRE OpenEnv environment"
+authors = [
+    { name = "Sharif" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "requests"
+]
+
+[tool.setuptools]
+packages = ["."]
