@@ -1,15 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build-meta"
+
 [project]
-name = "sre_env"
+name = "sre-env"
 version = "0.1.0"
-description = "SRE OpenEnv environment"
-authors = [{ name = "Shaik Mastan Vali" }]
+description = "SRE Environment for OpenEnv Hackathon"
 dependencies = [
     "fastapi",
     "uvicorn",
-    "requests",
-    "openai"
+    "openenv", 
+    "pydantic"
 ]
-
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"

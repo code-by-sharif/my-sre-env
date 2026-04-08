@@ -1,29 +1,15 @@
-name: ghost-sre-env
-
-description: >
-  An OpenEnv environment where an AI agent acts as an SRE engineer,
-  investigates system failures, and applies fixes using reasoning.
-
-version: "1.0"
-
-entry_point: inference.py
-
-env:
-  python_version: 3.10
+name: "ghost-sre-env"
+description: "SRE investigation and system recovery environment."
+version: "1.0.0"
+entry_point: "main:app"  # This should point to your FastAPI server file
 
 tasks:
-  - name: easy
-    description: Kill rogue process causing CPU spike
-  - name: medium
-    description: Fix service port mismatch
-  - name: hard
-    description: Detect and remove hidden configuration file
-
-authors:
-  - name: Shaik Mastan Vali
-
-tags:
-  - sre
-  - debugging
-  - system
-  - reasoning
+  - id: "easy_cpu_spike"
+    difficulty: "easy"
+    description: "Kill rogue process causing CPU spike"
+  - id: "medium_port_mismatch"
+    difficulty: "medium"
+    description: "Fix service port mismatch"
+  - id: "hard_hidden_config"
+    difficulty: "hard"
+    description: "Detect and remove hidden configuration file"
