@@ -5,7 +5,7 @@ BASE_URL = "http://127.0.0.1:8000"
 
 
 def run_episode(level="easy"):
-    print(f"\n--- Running {level} task ---")
+    print(f"[START] Running {level} task")
 
     # Reset environment
     res = requests.post(f"{BASE_URL}/reset", params={"level": level})
@@ -53,7 +53,7 @@ def run_episode(level="easy"):
                 "command": "ps"
             }
 
-        print(f"Step {steps} → Action: {action}")
+        print(f"[STEP] {steps} | Action: {action}")
 
         # Send action to environment
         res = requests.post(f"{BASE_URL}/step", json=action)
@@ -61,13 +61,17 @@ def run_episode(level="easy"):
 
         obs = result.get("obs", {})
         reward = result.get("reward", 0)
+
+        # ✅ Normalize reward (IMPORTANT)
+        reward = max(0.0, min(1.0, float(reward)))
+
         done = result.get("done", False)
 
-        print(f"Reward: {reward}, Done: {done}")
+        print(f"[STEP] {steps} | Reward: {reward} | Done: {done}")
 
-        time.sleep(1)
+        time.sleep(0.5)
 
-    print("Episode finished\n")
+    print(f"[END] Finished {level} task\n")
 
 
 # Run all levels

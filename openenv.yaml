@@ -1,11 +1,15 @@
 name: ghost-sre-env
+
 description: >
   An OpenEnv environment where an AI agent acts as an SRE engineer,
   investigates system failures, and applies fixes using reasoning.
 
 version: "1.0"
 
-entrypoint: main:app
+entry_point: inference.py
+
+env:
+  python_version: 3.10
 
 tasks:
   - name: easy
