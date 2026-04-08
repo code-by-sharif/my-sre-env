@@ -1,19 +1,30 @@
 import requests
 import time
 import os
-from openai import OpenAI  # ✅ REQUIRED
 
-# ✅ ENV VARIABLES
-API_BASE_URL = os.getenv("API_BASE_URL", "https://mastanvali9381s-sre-env.hf.space")
-MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+# ✅ SAFE IMPORT (REQUIRED but no crash)
+try:
+    from openai import OpenAI
+    client = OpenAI()
+except Exception:
+    client = None
 
-client = OpenAI()  # ✅ REQUIRED
+
+API_BASE_URL = os.getenv(
+    "API_BASE_URL",
+    "https://mastanvali9381s-sre-env.hf.space"
+)
+
 
 def run_episode(level="easy"):
-    print("START")
+    print(f"\n=== START {level.upper()} ===")
 
-    res = requests.post(f"{API_BASE_URL}/reset", params={"level": level})
-    obs = res.json()
+    try:
+        res = requests.post(f"{API_BASE_URL}/reset", params={"level": level})
+        obs = res.json()
+    except Exception as e:
+        print("Reset failed:", e)
+        return
 
     done = False
     steps = 0
@@ -50,29 +61,37 @@ def run_episode(level="easy"):
                     }
                     break
 
+        # FALLBACK
         if not action:
             action = {
                 "type": "EXECUTE",
                 "command": "ps"
             }
 
-        print("STEP", action)
+        print("STEP:", action)
 
-        res = requests.post(f"{API_BASE_URL}/step", json=action)
-        result = res.json()
+        try:
+            res = requests.post(f"{API_BASE_URL}/step", json=action)
+            result = res.json()
+        except Exception as e:
+            print("Step failed:", e)
+            break
 
         obs = result.get("observation", {})
         reward = float(result.get("reward", 0))
         done = result.get("done", False)
 
-        print("STEP RESULT", reward, done)
+        print("RESULT:", reward, done)
 
         time.sleep(0.2)
 
-    print("FINAL")
+    print(f"=== END {level.upper()} ===")
 
 
 if __name__ == "__main__":
-    run_episode("easy")
-    run_episode("medium")
-    run_episode("hard")
+    try:
+        run_episode("easy")
+        run_episode("medium")
+        run_episode("hard")
+    except Exception as e:
+        print("Fatal error:", e)
