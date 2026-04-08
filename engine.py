@@ -114,16 +114,12 @@ def apply_action(state: State, action_type: str, command: str):
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            found_bug = any(
-                p["pid"] == pid and p["name"] == "buggy_worker"
-                for p in state.processes
-            )
-
+            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            if found_bug:
+            if state.root_cause == f"process:{pid}":
                 state.system_status = "healthy"
                 reward = 1.0
                 done = True
@@ -141,16 +137,12 @@ def apply_action(state: State, action_type: str, command: str):
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            found_bug = any(
-                p["pid"] == pid and p["name"] == "buggy_worker"
-                for p in state.processes
-            )
-
+            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            if found_bug:
+            if state.root_cause == f"process:{pid}":
                 state.system_status = "healthy"
                 reward = 1.0
                 done = True
@@ -161,7 +153,7 @@ def apply_action(state: State, action_type: str, command: str):
         # FIX PORT
         # ----------------------------
         elif command.startswith("FIX_PORT"):
-            if "port:8080" == state.root_cause:
+            if state.root_cause.startswith("port:"):
                 state.system_status = "healthy"
                 reward = 1.0
                 done = True
@@ -174,7 +166,10 @@ def apply_action(state: State, action_type: str, command: str):
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
-            if f"file:{file}" == state.root_cause:
+            # remove file
+            state.files = [f for f in state.files if f != file]
+
+            if state.root_cause == f"file:{file}":
                 state.system_status = "healthy"
                 reward = 1.0
                 done = True
@@ -192,4 +187,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("FINAL ENGINE RUNNING")
+print("FINAL ENGINE READY")

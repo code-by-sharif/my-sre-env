@@ -2,7 +2,7 @@ import requests
 import time
 import os
 
-# ✅ SAFE IMPORT (REQUIRED but no crash)
+# SAFE IMPORT (REQUIRED)
 try:
     from openai import OpenAI
     client = OpenAI()
@@ -17,13 +17,13 @@ API_BASE_URL = os.getenv(
 
 
 def run_episode(level="easy"):
-    print(f"\n=== START {level.upper()} ===")
+    print(f"[START] Running {level} task")
 
     try:
         res = requests.post(f"{API_BASE_URL}/reset", params={"level": level})
         obs = res.json()
     except Exception as e:
-        print("Reset failed:", e)
+        print("[ERROR] Reset failed:", e)
         return
 
     done = False
@@ -68,24 +68,24 @@ def run_episode(level="easy"):
                 "command": "ps"
             }
 
-        print("STEP:", action)
+        print(f"[STEP] {steps} | Action: {action}")
 
         try:
             res = requests.post(f"{API_BASE_URL}/step", json=action)
             result = res.json()
         except Exception as e:
-            print("Step failed:", e)
+            print("[ERROR] Step failed:", e)
             break
 
         obs = result.get("observation", {})
         reward = float(result.get("reward", 0))
         done = result.get("done", False)
 
-        print("RESULT:", reward, done)
+        print(f"[STEP] {steps} | Reward: {reward} | Done: {done}")
 
         time.sleep(0.2)
 
-    print(f"=== END {level.upper()} ===")
+    print(f"[END] Finished {level} task\n")
 
 
 if __name__ == "__main__":
@@ -94,4 +94,4 @@ if __name__ == "__main__":
         run_episode("medium")
         run_episode("hard")
     except Exception as e:
-        print("Fatal error:", e)
+        print("[ERROR] Fatal:", e)
