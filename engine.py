@@ -107,15 +107,12 @@ def apply_action(state: State, action_type: str, command: str):
             except:
                 return state, -0.5, False
 
-            # 🚨 service crash case
             if pid == 1:
                 state.system_status = "crashed"
-                state.logs.append("service_crashed")  # ✅ added
-                reward = -1.0
-                done = True
-                return state, reward, done
+                state.logs.append("service_crashed")
+                return state, -1.0, True
 
-            # remove process
+            # ✅ REMOVE PROCESS
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
@@ -127,16 +124,19 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # ORIGINAL FORMAT
+        # 🔥 SUPPORT: "KILL_PROCESS:937"
         elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
             if pid == 1:
                 state.system_status = "crashed"
-                state.logs.append("service_crashed")  # ✅ added
-                reward = -1.0
-                done = True
-                return state, reward, done
+                state.logs.append("service_crashed")
+                return state, -1.0, True
+
+            # ✅ FIX: REMOVE PROCESS (THIS WAS MISSING)
+            state.processes = [
+                p for p in state.processes if p["pid"] != pid
+            ]
 
             if f"process:{pid}" == state.root_cause:
                 state.system_status = "healthy"
@@ -158,6 +158,9 @@ def apply_action(state: State, action_type: str, command: str):
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
+            # ✅ REMOVE FILE (small improvement)
+            state.files = [f for f in state.files if f != file]
+
             if f"file:{file}" == state.root_cause:
                 state.system_status = "healthy"
                 reward += 1.0
@@ -176,4 +179,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("NEW CODE RUNNING")
+print("FINAL FIXED ENGINE RUNNING")
