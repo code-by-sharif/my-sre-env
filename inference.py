@@ -1,14 +1,15 @@
 import requests
 import time
+import os
 
-BASE_URL = "http://127.0.0.1:8000"
-
+# ✅ REQUIRED ENV VARIABLES
+API_BASE_URL = os.getenv("API_BASE_URL", "https://mastanvali9381s-sre-env.hf.space")
 
 def run_episode(level="easy"):
-    print(f"[START] Running {level} task")
+    print("START")
 
     # Reset environment
-    res = requests.post(f"{BASE_URL}/reset", params={"level": level})
+    res = requests.post(f"{API_BASE_URL}/reset", params={"level": level})
     obs = res.json()
 
     done = False
@@ -19,7 +20,7 @@ def run_episode(level="easy"):
 
         action = None
 
-        # EASY: detect buggy process
+        # EASY
         for proc in obs.get("processes", []):
             if proc.get("name") == "buggy_worker":
                 pid = proc.get("pid")
@@ -29,14 +30,14 @@ def run_episode(level="easy"):
                 }
                 break
 
-        # MEDIUM: detect port issue
+        # MEDIUM
         if not action and obs.get("ports"):
             action = {
                 "type": "APPLY_PATCH",
                 "command": "FIX_PORT"
             }
 
-        # HARD: detect hidden file
+        # HARD
         if not action and obs.get("files"):
             for file in obs["files"]:
                 if file.startswith("/tmp/."):
@@ -53,28 +54,24 @@ def run_episode(level="easy"):
                 "command": "ps"
             }
 
-        print(f"[STEP] {steps} | Action: {action}")
+        print("STEP", action)
 
-        # Send action to environment
-        res = requests.post(f"{BASE_URL}/step", json=action)
+        # Send action
+        res = requests.post(f"{API_BASE_URL}/step", json=action)
         result = res.json()
 
-        obs = result.get("obs", {})
-        reward = result.get("reward", 0)
-
-        # ✅ Normalize reward (IMPORTANT)
-        reward = max(0.0, min(1.0, float(reward)))
-
+        # ✅ FIXED KEY
+        obs = result.get("observation", {})
+        reward = float(result.get("reward", 0))
         done = result.get("done", False)
 
-        print(f"[STEP] {steps} | Reward: {reward} | Done: {done}")
+        print("STEP RESULT", reward, done)
 
-        time.sleep(0.5)
+        time.sleep(0.2)
 
-    print(f"[END] Finished {level} task\n")
+    print("FINAL\n")
 
 
-# Run all levels
 if __name__ == "__main__":
     run_episode("easy")
     run_episode("medium")
