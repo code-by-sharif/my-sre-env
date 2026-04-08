@@ -1,14 +1,17 @@
 import requests
 import time
 import os
+from openai import OpenAI  # ✅ REQUIRED
 
-# ✅ REQUIRED ENV VARIABLES
+# ✅ ENV VARIABLES
 API_BASE_URL = os.getenv("API_BASE_URL", "https://mastanvali9381s-sre-env.hf.space")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+
+client = OpenAI()  # ✅ REQUIRED
 
 def run_episode(level="easy"):
     print("START")
 
-    # Reset environment
     res = requests.post(f"{API_BASE_URL}/reset", params={"level": level})
     obs = res.json()
 
@@ -47,7 +50,6 @@ def run_episode(level="easy"):
                     }
                     break
 
-        # fallback
         if not action:
             action = {
                 "type": "EXECUTE",
@@ -56,11 +58,9 @@ def run_episode(level="easy"):
 
         print("STEP", action)
 
-        # Send action
         res = requests.post(f"{API_BASE_URL}/step", json=action)
         result = res.json()
 
-        # ✅ FIXED KEY
         obs = result.get("observation", {})
         reward = float(result.get("reward", 0))
         done = result.get("done", False)
@@ -69,7 +69,7 @@ def run_episode(level="easy"):
 
         time.sleep(0.2)
 
-    print("FINAL\n")
+    print("FINAL")
 
 
 if __name__ == "__main__":
