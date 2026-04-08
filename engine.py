@@ -76,11 +76,11 @@ def get_observation(state: State, last_action=None):
 # ----------------------------
 def apply_action(state: State, action_type: str, command: str):
 
-    reward = -0.05  # step penalty
+    reward = -0.05
     done = False
 
     # ----------------------------
-    # EXECUTE commands (diagnostics)
+    # EXECUTE
     # ----------------------------
     if action_type == "EXECUTE":
         if command == "ps":
@@ -100,15 +100,17 @@ def apply_action(state: State, action_type: str, command: str):
     # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # 🔥 NEW: Support "kill 937"
+        # 🔥 SUPPORT: "kill 937"
         if command.lower().startswith("kill"):
             try:
                 pid = int(command.split()[1])
             except:
                 return state, -0.5, False
 
+            # 🚨 service crash case
             if pid == 1:
                 state.system_status = "crashed"
+                state.logs.append("service_crashed")  # ✅ added
                 reward = -1.0
                 done = True
                 return state, reward, done
@@ -118,7 +120,6 @@ def apply_action(state: State, action_type: str, command: str):
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            # check root cause
             if f"process:{pid}" == state.root_cause:
                 state.system_status = "healthy"
                 reward += 1.0
@@ -126,12 +127,13 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # ORIGINAL FORMAT (keep this)
+        # ORIGINAL FORMAT
         elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
             if pid == 1:
                 state.system_status = "crashed"
+                state.logs.append("service_crashed")  # ✅ added
                 reward = -1.0
                 done = True
                 return state, reward, done
@@ -143,7 +145,7 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # Fix port
+        # FIX PORT
         elif command.startswith("FIX_PORT"):
             if "port:8080" == state.root_cause:
                 state.system_status = "healthy"
@@ -152,7 +154,7 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # Delete file
+        # DELETE FILE
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
@@ -163,12 +165,15 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-    # reduce budget
+    # ----------------------------
+    # Budget
+    # ----------------------------
     state.budget_remaining -= 0.05
 
     if state.budget_remaining <= 0:
         done = True
 
     return state, reward, done
+
 
 print("NEW CODE RUNNING")
