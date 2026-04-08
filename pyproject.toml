@@ -1,15 +1,15 @@
 [project]
-name = "sre-env"
+name = "sre_env"
 version = "0.1.0"
 description = "SRE OpenEnv environment"
-authors = [
-    { name = "Sharif" }
-]
+authors = [{ name = "Shaik Mastan Vali" }]
 dependencies = [
     "fastapi",
     "uvicorn",
-    "requests"
+    "requests",
+    "openai"
 ]
 
-[tool.setuptools]
-packages = ["."]
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
