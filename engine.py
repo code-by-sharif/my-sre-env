@@ -80,7 +80,7 @@ def apply_action(state: State, action_type: str, command: str):
     done = False
 
     # ----------------------------
-    # EXECUTE
+    # EXECUTE (diagnostics)
     # ----------------------------
     if action_type == "EXECUTE":
         if command == "ps":
@@ -100,77 +100,89 @@ def apply_action(state: State, action_type: str, command: str):
     # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # 🔹 SUPPORT: "kill 937"
+        # ----------------------------
+        # kill <pid>
+        # ----------------------------
         if command.lower().startswith("kill"):
             try:
                 pid = int(command.split()[1])
             except:
                 return state, -0.5, False
 
-            # crash case
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            # remove process
+            found_bug = any(
+                p["pid"] == pid and p["name"] == "buggy_worker"
+                for p in state.processes
+            )
+
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            # check root cause
-            if f"process:{pid}" == state.root_cause:
+            if found_bug:
                 state.system_status = "healthy"
-                reward += 1.0
+                reward = 1.0
                 done = True
             else:
-                reward -= 0.5
+                reward = -0.5
 
-        # 🔹 SUPPORT: "KILL_PROCESS:937"
+        # ----------------------------
+        # KILL_PROCESS:<pid>
+        # ----------------------------
         elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
-            # crash case
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            # remove process
+            found_bug = any(
+                p["pid"] == pid and p["name"] == "buggy_worker"
+                for p in state.processes
+            )
+
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            # 🔥 FORCE FIX: check if buggy_worker gone
-            if not any(p["name"] == "buggy_worker" for p in state.processes):
+            if found_bug:
                 state.system_status = "healthy"
-                reward += 1.0
+                reward = 1.0
                 done = True
             else:
-                reward -= 0.5
+                reward = -0.5
 
-        # 🔹 FIX PORT
+        # ----------------------------
+        # FIX PORT
+        # ----------------------------
         elif command.startswith("FIX_PORT"):
             if "port:8080" == state.root_cause:
                 state.system_status = "healthy"
-                reward += 1.0
+                reward = 1.0
                 done = True
             else:
-                reward -= 0.5
+                reward = -0.5
 
-        # 🔹 DELETE FILE
+        # ----------------------------
+        # DELETE FILE
+        # ----------------------------
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
             if f"file:{file}" == state.root_cause:
                 state.system_status = "healthy"
-                reward += 1.0
+                reward = 1.0
                 done = True
             else:
-                reward -= 0.5
+                reward = -0.5
 
     # ----------------------------
-    # Budget
+    # Budget handling
     # ----------------------------
     state.budget_remaining -= 0.05
 
@@ -180,4 +192,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("FINAL CLEAN ENGINE RUNNING")
+print("FINAL ENGINE RUNNING")
