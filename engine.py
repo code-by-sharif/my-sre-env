@@ -100,8 +100,34 @@ def apply_action(state: State, action_type: str, command: str):
     # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # Kill process
-        if command.startswith("KILL_PROCESS"):
+        # 🔥 NEW: Support "kill 937"
+        if command.lower().startswith("kill"):
+            try:
+                pid = int(command.split()[1])
+            except:
+                return state, -0.5, False
+
+            if pid == 1:
+                state.system_status = "crashed"
+                reward = -1.0
+                done = True
+                return state, reward, done
+
+            # remove process
+            state.processes = [
+                p for p in state.processes if p["pid"] != pid
+            ]
+
+            # check root cause
+            if f"process:{pid}" == state.root_cause:
+                state.system_status = "healthy"
+                reward += 1.0
+                done = True
+            else:
+                reward -= 0.5
+
+        # ORIGINAL FORMAT (keep this)
+        elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
             if pid == 1:
