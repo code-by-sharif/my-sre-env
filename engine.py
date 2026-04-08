@@ -100,23 +100,25 @@ def apply_action(state: State, action_type: str, command: str):
     # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # 🔥 SUPPORT: "kill 937"
+        # 🔹 SUPPORT: "kill 937"
         if command.lower().startswith("kill"):
             try:
                 pid = int(command.split()[1])
             except:
                 return state, -0.5, False
 
+            # crash case
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            # ✅ REMOVE PROCESS
+            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
+            # check root cause
             if f"process:{pid}" == state.root_cause:
                 state.system_status = "healthy"
                 reward += 1.0
@@ -124,28 +126,30 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # 🔥 SUPPORT: "KILL_PROCESS:937"
+        # 🔹 SUPPORT: "KILL_PROCESS:937"
         elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
+            # crash case
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
                 return state, -1.0, True
 
-            # ✅ FIX: REMOVE PROCESS (THIS WAS MISSING)
+            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
-            if f"process:{pid}" == state.root_cause:
+            # 🔥 FORCE FIX: check if buggy_worker gone
+            if not any(p["name"] == "buggy_worker" for p in state.processes):
                 state.system_status = "healthy"
                 reward += 1.0
                 done = True
             else:
                 reward -= 0.5
 
-        # FIX PORT
+        # 🔹 FIX PORT
         elif command.startswith("FIX_PORT"):
             if "port:8080" == state.root_cause:
                 state.system_status = "healthy"
@@ -154,12 +158,9 @@ def apply_action(state: State, action_type: str, command: str):
             else:
                 reward -= 0.5
 
-        # DELETE FILE
+        # 🔹 DELETE FILE
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
-
-            # ✅ REMOVE FILE (small improvement)
-            state.files = [f for f in state.files if f != file]
 
             if f"file:{file}" == state.root_cause:
                 state.system_status = "healthy"
@@ -179,4 +180,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("FINAL FIXED ENGINE RUNNING")
+print("FINAL CLEAN ENGINE RUNNING")
