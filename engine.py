@@ -170,3 +170,5 @@ def apply_action(state: State, action_type: str, command: str):
         done = True
 
     return state, reward, done
+
+print("NEW CODE RUNNING")
