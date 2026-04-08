@@ -1,3 +1,23 @@
+---
+title: SRE Environment
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+python_version: "3.10"
+app_port: 7860
+---
+
+
+
+
+
+
+
+
+
+
+
 # 🚀 Ghost in the Machine: SRE Shadow-IT Investigator
 
 ## 🧠 Overview
