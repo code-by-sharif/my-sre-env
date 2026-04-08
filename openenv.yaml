@@ -1,0 +1,25 @@
+name: ghost-sre-env
+description: >
+  An OpenEnv environment where an AI agent acts as an SRE engineer,
+  investigates system failures, and applies fixes using reasoning.
+
+version: "1.0"
+
+entrypoint: main:app
+
+tasks:
+  - name: easy
+    description: Kill rogue process causing CPU spike
+  - name: medium
+    description: Fix service port mismatch
+  - name: hard
+    description: Detect and remove hidden configuration file
+
+authors:
+  - name: Shaik Mastan Vali
+
+tags:
+  - sre
+  - debugging
+  - system
+  - reasoning
