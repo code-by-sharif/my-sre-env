@@ -176,4 +176,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("FINAL ENGINE READY 🚀")
+print("ENGINE V2 DEPLOYED 🚀")
