@@ -37,7 +37,7 @@ def initialize_state(level="easy"):
             root_cause=f"port:{correct_port}"
         )
 
-    else:  # hard
+    else:
         hidden_file = random.choice(
             ["/tmp/.hidden_cfg", "/tmp/.cache_file", "/tmp/.temp"]
         )
@@ -76,104 +76,78 @@ def get_observation(state: State, last_action=None):
 # ----------------------------
 def apply_action(state: State, action_type: str, command: str):
 
-    reward = 0.2   # default safe reward
+    reward = 0.2
     done = False
 
-    # ----------------------------
-    # EXECUTE (diagnostics)
-    # ----------------------------
     if action_type == "EXECUTE":
         if command == "ps":
-            state.logs.append("Checked running processes")
+            state.logs.append("Checked processes")
             reward = 0.3
-
         elif command == "ls":
-            state.logs.append("Listed files")
+            state.logs.append("Checked files")
             reward = 0.3
-
         elif command == "netstat":
             state.logs.append("Checked ports")
             reward = 0.3
 
-    # ----------------------------
-    # APPLY PATCH
-    # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # kill <pid>
-        if command.lower().startswith("kill"):
-            try:
-                pid = int(command.split()[1])
-            except:
-                return state, 0.1, False
-
-            if pid == 1:
-                state.system_status = "crashed"
-                state.logs.append("service_crashed")
-                return state, 0.05, True
-
-            state.processes = [
-                p for p in state.processes if p["pid"] != pid
-            ]
-
-            if state.root_cause == f"process:{pid}":
-                state.system_status = "healthy"
-                reward = 0.95
-                done = True
-            else:
-                reward = 0.1
-
-        # KILL_PROCESS:<pid>
-        elif command.startswith("KILL_PROCESS"):
+        # ----------------------------
+        # KILL_PROCESS
+        # ----------------------------
+        if command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
             if pid == 1:
                 state.system_status = "crashed"
-                state.logs.append("service_crashed")
                 return state, 0.05, True
 
-            state.processes = [
-                p for p in state.processes if p["pid"] != pid
-            ]
+            # ✅ FIX: manual removal (guaranteed)
+            new_list = []
+            for p in state.processes:
+                if p["pid"] != pid:
+                    new_list.append(p)
 
+            state.processes = new_list
+
+            # ✅ check root cause AFTER removal
             if state.root_cause == f"process:{pid}":
                 state.system_status = "healthy"
-                reward = 0.95
-                done = True
+                return state, 0.95, True
             else:
-                reward = 0.1
+                return state, 0.1, False
 
+        # ----------------------------
         # FIX PORT
+        # ----------------------------
         elif command.startswith("FIX_PORT"):
             if state.root_cause.startswith("port:"):
                 state.system_status = "healthy"
-                reward = 0.95
-                done = True
+                return state, 0.95, True
             else:
-                reward = 0.1
+                return state, 0.1, False
 
+        # ----------------------------
         # DELETE FILE
+        # ----------------------------
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
+            # remove file
             state.files = [f for f in state.files if f != file]
 
             if state.root_cause == f"file:{file}":
                 state.system_status = "healthy"
-                reward = 0.95
-                done = True
+                return state, 0.95, True
             else:
-                reward = 0.1
+                return state, 0.1, False
 
-    # ----------------------------
-    # Budget handling
-    # ----------------------------
+    # budget
     state.budget_remaining -= 0.05
-
     if state.budget_remaining <= 0:
         done = True
 
     return state, reward, done
 
 
-print("ENGINE V2 DEPLOYED 🚀")
+print("ENGINE FINAL FIXED 🚀")
