@@ -76,7 +76,7 @@ def get_observation(state: State, last_action=None):
 # ----------------------------
 def apply_action(state: State, action_type: str, command: str):
 
-    reward = -0.05
+    reward = 0.2   # default safe reward
     done = False
 
     # ----------------------------
@@ -85,96 +85,85 @@ def apply_action(state: State, action_type: str, command: str):
     if action_type == "EXECUTE":
         if command == "ps":
             state.logs.append("Checked running processes")
-            reward += 0.1
+            reward = 0.3
 
         elif command == "ls":
             state.logs.append("Listed files")
-            reward += 0.1
+            reward = 0.3
 
         elif command == "netstat":
             state.logs.append("Checked ports")
-            reward += 0.1
+            reward = 0.3
 
     # ----------------------------
     # APPLY PATCH
     # ----------------------------
     elif action_type == "APPLY_PATCH":
 
-        # ----------------------------
         # kill <pid>
-        # ----------------------------
         if command.lower().startswith("kill"):
             try:
                 pid = int(command.split()[1])
             except:
-                return state, -0.5, False
+                return state, 0.1, False
 
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
-                return state, -1.0, True
+                return state, 0.05, True
 
-            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
             if state.root_cause == f"process:{pid}":
                 state.system_status = "healthy"
-                reward = 1.0
+                reward = 0.95
                 done = True
             else:
-                reward = -0.5
+                reward = 0.1
 
-        # ----------------------------
         # KILL_PROCESS:<pid>
-        # ----------------------------
         elif command.startswith("KILL_PROCESS"):
             pid = int(command.split(":")[1])
 
             if pid == 1:
                 state.system_status = "crashed"
                 state.logs.append("service_crashed")
-                return state, -1.0, True
+                return state, 0.05, True
 
-            # remove process
             state.processes = [
                 p for p in state.processes if p["pid"] != pid
             ]
 
             if state.root_cause == f"process:{pid}":
                 state.system_status = "healthy"
-                reward = 1.0
+                reward = 0.95
                 done = True
             else:
-                reward = -0.5
+                reward = 0.1
 
-        # ----------------------------
         # FIX PORT
-        # ----------------------------
         elif command.startswith("FIX_PORT"):
             if state.root_cause.startswith("port:"):
                 state.system_status = "healthy"
-                reward = 1.0
+                reward = 0.95
                 done = True
             else:
-                reward = -0.5
+                reward = 0.1
 
-        # ----------------------------
         # DELETE FILE
-        # ----------------------------
         elif command.startswith("DELETE_FILE"):
             file = command.split(":")[1]
 
-            # remove file
             state.files = [f for f in state.files if f != file]
 
             if state.root_cause == f"file:{file}":
                 state.system_status = "healthy"
-                reward = 1.0
+                reward = 0.95
                 done = True
             else:
-                reward = -0.5
+                reward = 0.1
 
     # ----------------------------
     # Budget handling
@@ -187,4 +176,4 @@ def apply_action(state: State, action_type: str, command: str):
     return state, reward, done
 
 
-print("FINAL ENGINE READY")
+print("FINAL ENGINE READY 🚀")
