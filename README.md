@@ -8,40 +8,42 @@ python_version: "3.10"
 app_port: 7860
 ---
 
-
-
-
-
-
-
-
-
-
-
 # 🚀 Ghost in the Machine: SRE Shadow-IT Investigator
 
 ## 🧠 Overview
 This project implements a real-world OpenEnv environment simulating SRE (Site Reliability Engineering) incident response.
 
-An AI agent must:
-- investigate system state
-- identify root cause
-- apply correct fix
+An AI agent interacts with the system to:
+- investigate system state  
+- identify root cause  
+- apply the correct fix  
 
-This project is designed as a reinforcement learning training environment for SRE decision-making.
-This environment simulates real incident debugging workflows used by SRE engineers in production systems.
+This environment is designed for training and evaluating decision-making agents in realistic debugging scenarios.
+
+---
+
+## 🌍 Real-World Relevance
+This environment models real production issues commonly handled by SRE engineers:
+
+- Rogue processes causing high CPU usage  
+- Incorrect service configurations (ports)  
+- Hidden configuration overrides  
+
+Such environments can be used to train autonomous agents for:
+- system monitoring  
+- automated debugging  
+- self-healing infrastructure  
 
 ---
 
 ## 🎯 Objective
-Restore the system to a healthy state with minimal steps and correct decisions.
+Restore the system to a healthy state using correct decisions in minimal steps.
 
 ---
 
 ## 🧱 Environment Design
 
 ### Observation Space
-
 - system_status  
 - processes  
 - ports  
@@ -55,6 +57,13 @@ Restore the system to a healthy state with minimal steps and correct decisions.
 
 ---
 
+## 🔄 Environment Workflow
+```text
+reset → observation → decision → step → repeat → done
+```
+
+---
+
 ## 🧪 Tasks
 
 | Level  | Description |
@@ -64,69 +73,58 @@ Restore the system to a healthy state with minimal steps and correct decisions.
 | Hard   | Detect and remove hidden configuration file |
 
 ### Difficulty Scaling
-
-- Easy → simple issue with clear signals  
-- Medium → multiple signals with partial noise  
-- Hard → hidden issues with misleading logs  
+- Easy → clear and direct signal  
+- Medium → partial ambiguity  
+- Hard → hidden root cause with multiple possibilities  
 
 ---
 
 ## 🎁 Reward Design
 
-- +1.0 → correct fix  
-- +0.1 → useful diagnostic actions  
-- -0.05 → step penalty  
-- -0.5 → incorrect action  
-- -1.0 → critical failure  
+- +0.95 → correct fix (task completed)  
+- +0.1 → intermediate or incorrect action  
 
-### Reward Calculation Details
+### Reward Behavior
+- High reward when correct root cause is fixed  
+- All other actions return small positive reward  
+- Rewards strictly remain in range (0, 1)  
 
-The reward is computed at each step based on system behavior:
-
-- Correct fix immediately restores system → +1.0  
-- Diagnostic actions that move towards solution → +0.1  
-- Each step taken → -0.05 penalty (to encourage efficiency)  
-- Wrong fix or irrelevant action → -0.5  
-- Critical system failure or wrong major action → -1.0  
-
-**Example:**
-If the agent takes 5 steps and then applies the correct fix:  
-Total reward = (5 × -0.05) + 1.0 = **+0.75**
+Example:  
+If the agent takes 3 steps and then fixes correctly:  
+Total reward = (3 × 0.1) + 0.95 = 1.25  
 
 ---
 
 ## ⏱️ Episode Configuration
-
 - Max Steps per Episode: 20  
 - Episode ends when:
-  - system is restored ✅  
-  - or max steps reached ❌  
-
-This ensures controlled training and evaluation.
+  - system is restored  
+  - or max steps reached  
 
 ---
 
 ## ⚠️ Error Handling
-
-The environment returns structured errors for invalid or harmful actions:
-
 - invalid_action  
 - service_crashed  
 - permission_denied  
 
 ---
 
+## 🧠 Design Decisions
+- Rule-based baseline agent ensures deterministic behavior  
+- Progressive difficulty simulates real-world debugging  
+- Reward structure ensures stable evaluation  
+- Trial-based elimination used in hard level  
+
+---
+
 ## 🏋️ Training Support
-
-This environment supports reinforcement learning algorithms such as:
-
-- PPO (recommended)  
+Supports:
+- PPO  
 - DQN  
 - A2C  
 
-Agents interact using standard OpenEnv APIs: `step()`, `reset()`, `state()`.
-
-### Example Training Loop
+Example loop:
 
 ```python
 state = env.reset()
@@ -142,13 +140,28 @@ for step in range(20):
 ---
 
 ## 🤖 Baseline Agent
-
-A simple rule-based agent is implemented in `inference.py`.
+Implemented in inference.py:
+- analyzes observation  
+- selects action  
+- solves tasks  
 
 ---
 
 ## ▶️ Run Locally
-
 ```bash
 python -m uvicorn main:app --reload
 ```
+
+---
+
+## 🏆 Key Strengths
+- Real-world SRE simulation  
+- Clean environment design  
+- Stable reward system  
+- Clear action-observation mapping  
+- OpenEnv compliant  
+
+---
+
+## 🚀 Future Scope
+Can be extended into real-world self-healing systems where agents automatically detect and fix production issues.
